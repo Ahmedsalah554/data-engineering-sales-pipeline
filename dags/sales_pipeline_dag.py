@@ -1,85 +1,102 @@
-# dags/sales_pipeline_dag.py
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from datetime import datetime, timedelta
-
-import sys
-import os
+from datetime import datetime
 import pandas as pd
+import psycopg2
 
-# إضافة الـ scripts للف PATH
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scripts")))
+def get_connection_config():
+    
+    try:
+        
+        conn = psycopg2.connect(
+            host="postgres-db",
+            port="5432",
+            database="sales_db",
+            user="postgres",
+            password="1234",
+            connect_timeout=3
+        )
+        conn.close()
+        return {
+            "host": "postgres-db",
+            "port": "5432",
+            "database": "sales_db",
+            "user": "postgres",
+            "password": "1234"
+        }
+    except Exception:
+        # fallback → host.docker.internal
+        return {
+            "host": "host.docker.internal",
+            "port": "5432",
+            "database": "sales_db",
+            "user": "postgres",
+            "password": "1234"
+        }
 
-from extract import extract_data
-from transform import transform_data
-from load import load_data
+def extract(**kwargs):
+    DB_CONFIG = get_connection_config()
+    conn = psycopg2.connect(**DB_CONFIG)
+    query = "SELECT * FROM sales_data;"
+    df = pd.read_sql(query, conn)
+    conn.close()
+    return df.to_dict()
 
-# 🗓️ إعدادات عامة للـ DAG
-default_args = {
-    "owner": "airflow",
-    "depends_on_past": False,
-    "email_on_failure": False,
-    "email_on_retry": False,
-    "retries": 1,
-    "retry_delay": timedelta(minutes=5),
-}
+def transform(**kwargs):
+    ti = kwargs['ti']
+    data = ti.xcom_pull(task_ids='extract_task')
+    df = pd.DataFrame.from_dict(data)
+    summary = df.groupby("PRODUCTLINE")["SALES"].sum().reset_index()
+    return summary.to_dict()
 
-# تعريف الـ DAG
+def load(**kwargs):
+    ti = kwargs['ti']
+    summary = ti.xcom_pull(task_ids='transform_task')
+    df = pd.DataFrame.from_dict(summary)
+
+    DB_CONFIG = get_connection_config()
+    conn = psycopg2.connect(**DB_CONFIG)
+    cur = conn.cursor()
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS sales_summary (
+            productline VARCHAR(100),
+            total_sales NUMERIC
+        )
+    """)
+    conn.commit()
+
+    cur.execute("TRUNCATE TABLE sales_summary")
+
+    for _, row in df.iterrows():
+        cur.execute(
+            "INSERT INTO sales_summary (productline, total_sales) VALUES (%s, %s)",
+            (row['PRODUCTLINE'], row['SALES'])
+        )
+    conn.commit()
+    conn.close()
+
 with DAG(
-    dag_id="sales_pipeline_dag",
-    default_args=default_args,
-    description="ETL pipeline for sales data with PostgreSQL",
-    schedule_interval="@daily",  # كل يوم
-    start_date=datetime(2025, 9, 30),
+    dag_id="sales_etl_pipeline",
+    start_date=datetime(2025, 1, 1),
+    schedule=None,  
     catchup=False,
-    tags=["etl", "sales", "postgres"],
+    tags=["etl", "sales"]
 ) as dag:
 
-    # 🟢 Task 1: Extract
-    def extract_task(**kwargs):
-        df = extract_data("data/sales_data.csv")
-        kwargs["ti"].xcom_push(key="raw_data", value=df.to_json())
-
-    extract = PythonOperator(
-        task_id="extract_data",
-        python_callable=extract_task,
-        provide_context=True,
+    extract_task = PythonOperator(
+        task_id="extract_task",
+        python_callable=extract
     )
 
-    # 🟡 Task 2: Transform
-    def transform_task(**kwargs):
-        import json
-        raw_json = kwargs["ti"].xcom_pull(task_ids="extract_data", key="raw_data")
-        df_raw = pd.read_json(raw_json)
-        df_transformed = transform_data(df_raw)
-        kwargs["ti"].xcom_push(key="transformed_data", value=df_transformed.to_json())
-
-    transform = PythonOperator(
-        task_id="transform_data",
-        python_callable=transform_task,
-        provide_context=True,
+    transform_task = PythonOperator(
+        task_id="transform_task",
+        python_callable=transform
     )
 
-    # 🔵 Task 3: Load
-    def load_task(**kwargs):
-        import json
-        transformed_json = kwargs["ti"].xcom_pull(task_ids="transform_data", key="transformed_data")
-        df_transformed = pd.read_json(transformed_json)
-
-        load_data(
-            df_transformed,
-            user="postgres",
-            password="1234",   # ✏️ غير الباسورد حسب إعدادك
-            host="localhost",
-            port=5432,
-            db="sales_db",
-        )
-
-    load = PythonOperator(
-        task_id="load_data",
-        python_callable=load_task,
-        provide_context=True,
+    load_task = PythonOperator(
+        task_id="load_task",
+        python_callable=load
     )
 
-    # ترتيب التاسكات
-    extract >> transform >> load
+    extract_task >> transform_task >> load_task
