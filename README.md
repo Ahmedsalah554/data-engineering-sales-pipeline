@@ -33,3 +33,41 @@ data-engineering-sales-pipeline/
 ├── requirements.txt               # Python dependencies
 └── README.md                      # Project documentation Python dependencies
 └── README.md                      # Project documentation
+
+⚡ Tech Stack
+
+Python: Data processing with Pandas.
+
+PostgreSQL: Relational database.
+
+Airflow: Workflow orchestration.
+
+SQLAlchemy: Database connection layer.
+
+Docker: Containerized environment.
+
+🎯 Goals
+
+Hands-on practice with Data Engineering tools.
+
+Build a real-world ETL pipeline.
+
+Gain experience with Airflow and PostgreSQL.
+
+Showcase as a portfolio project.
+
+📌 Future Improvements
+
+✅ Add Data Quality Checks.
+
+✅ Support multiple data sources (CSV + API).
+
+✅ Add visualization dashboards.
+
+✅ Fully containerize the pipeline.
+
+👨‍💻 Author
+
+Ahmed Salah
+Data Engineering Enthusiast 🚀
+GitHub Profile
