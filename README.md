@@ -20,16 +20,14 @@ The pipeline processes sales data:
 ## 📂 Project Structure
 data-engineering-sales-pipeline/
 ├── dags/
-│ └── sales_pipeline_dag.py # Airflow DAG
+│   └── sales_pipeline_dag.py      # Airflow DAG
 ├── scripts/
-│ ├── extract.py # Extract step
-│ ├── transform.py # Transform step
-│ └── load.py # Load step
+│   ├── extract.py                 # Extract step
+│   ├── transform.py               # Transform step
+│   └── load.py                    # Load step
 ├── data/
-│ └── sales_data_sample.csv # Sample sales data
+│   └── sales_data_sample.csv      # Sample sales data
 ├── sql/
-│ └── create_tables.sql # PostgreSQL schema
-├── requirements.txt # Python dependencies
-└── README.md # Project documentation
-
-
+│   └── create_tables.sql          # PostgreSQL schema
+├── requirements.txt               # Python dependencies
+└── README.md                      # Project documentation
