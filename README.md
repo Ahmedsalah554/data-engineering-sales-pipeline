@@ -1,26 +1,35 @@
-<<<<<<< HEAD
+# 🚀 Data Engineering ETL Pipeline with Airflow & PostgreSQL
 
-# Data Engineering Sales Pipeline
+This project demonstrates a complete **ETL Data Pipeline** using:
+- **Python** 🐍
+- **PostgreSQL** 🐘
+- **Apache Airflow** 🌬️
+- **Docker** 🐳
 
-This project is a full ETL pipeline for processing sales data using **Airflow** and **PostgreSQL**.
+---
 
-## Features
-- Extract sales data from CSV files
-- Transform: calculate total sales per product line
-- Load: store summary into PostgreSQL table
-- Airflow DAG for scheduling and monitoring
-- Dockerized setup for easy deployment
+## 📌 Project Overview
+The pipeline processes sales data:
+1. **Extract**: Load data from a CSV file.  
+2. **Transform**: Clean data and calculate `total_price = quantity * unit_price`.  
+3. **Load**: Store the transformed data in PostgreSQL.  
+4. **Orchestration**: Manage and schedule the pipeline using Airflow.  
 
-## Requirements
-- Docker & Docker Compose
-- Python 3.13+
-- Airflow 2.x
-- PostgreSQL 13
+---
 
-## Usage
-1. Start services:
-```bash
-docker-compose up -d
-=======
-# data-engineering-sales-pipeline
->>>>>>> 28228d3 (Initial commit: setup project structure and DAG)
+## 📂 Project Structure
+data-engineering-sales-pipeline/
+├── dags/
+│ └── sales_pipeline_dag.py # Airflow DAG
+├── scripts/
+│ ├── extract.py # Extract step
+│ ├── transform.py # Transform step
+│ └── load.py # Load step
+├── data/
+│ └── sales_data_sample.csv # Sample sales data
+├── sql/
+│ └── create_tables.sql # PostgreSQL schema
+├── requirements.txt # Python dependencies
+└── README.md # Project documentation
+
+
