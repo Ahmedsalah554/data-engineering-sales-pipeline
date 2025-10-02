@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 # Data Engineering Sales Pipeline
 
@@ -20,3 +21,6 @@ This project is a full ETL pipeline for processing sales data using **Airflow** 
 1. Start services:
 ```bash
 docker-compose up -d
+=======
+# data-engineering-sales-pipeline
+>>>>>>> 28228d3 (Initial commit: setup project structure and DAG)
